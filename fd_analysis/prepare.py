@@ -22,28 +22,41 @@ def filter_corrupt_files(paths: List[Path]) -> (List[Dict[str, Any]], List[str])
             corrupt_files.append(path.name)
     return data, corrupt_files
 
+def exctract_code_directories(codedir: Dict[str, Dict[str, Any]], project_name: str) -> Dict[str, Dict[str, Any]]:
+    """Exctract code directories and sum up the number of files in each directory."""
+    code_dirs = defaultdict(int)
+    for folder, source_type_dict in codedir.items():
+        if folder.lower() == project_name.lower():
+            code_dirs |= {
+                ("PROJECT_NAME", "py"): source_type_dict["py"], 
+                ("PROJECT_NAME","ipynb"): source_type_dict["ipynb"]
+                }
+        else:
+            code_dirs |= {
+                (folder, "py"): source_type_dict["py"], 
+                (folder,"ipynb"): source_type_dict["ipynb"]
+                }
+    return code_dirs
+
 
 def get_python_projects(data: Dict[str, Dict[str, Any]]) -> Set[str]:
     """Get all projects that have Python code. Create a set of Python project names."""
     codedirs = defaultdict(dict)
     for k, d in data.items():
+        project_name = d["metadata"]["project_name"]
+        # There should be .py or .ipynb files in the code_dirs
+        # but if there are only .ipynb files and no imports, then
+        # it is most likely an R project
         if d["code_dirs"]:
-            for folder, source_type_dict in d["code_dirs"].items():
-                if folder.lower() == d["metadata"]["project_name"].lower():
-                    codedirs[d["metadata"]["project_name"]] |= {
-                        ("PROJECT_NAME", "py"): source_type_dict["py"], 
-                        ("PROJECT_NAME","ipynb"): source_type_dict["ipynb"]
-                        }
-                else:
-                    codedirs[d["metadata"]["project_name"]] |= {
-                        (folder, "py"): source_type_dict["py"], 
-                        (folder,"ipynb"): source_type_dict["ipynb"]
-                        }
+            code_dirs = exctract_code_directories(d["code_dirs"], project_name)
+            total_ipynb_count = sum([v for k, v in code_dirs.items() if k[1] == "ipynb"])
+            total_py_count = sum([v for k, v in code_dirs.items() if k[1] == "py"])
+            if not (total_ipynb_count > 0 and total_py_count == 0):
+                codedirs[project_name] = code_dirs
 
     df_codedirs = pd.DataFrame.from_dict(codedirs, orient="index")
 
     python_projects = set(df_codedirs.index)
-    print("Number of Python projects: ", len(python_projects))
     return python_projects
 
 def get_depsfiles(data) -> Dict[str, List[Dict[str, Any]]]:
@@ -71,3 +84,25 @@ def get_parser_choices(depsfiles):
                 _pc[d["parser_choice"]] += d["deps_count"]
         parser_choices[k] = _pc
     return parser_choices
+
+
+def reduce_directory_levels(code_dirs: Dict[str, Any], deps_file: Dict[str, Any], level: int = 2) -> Dict[str, Any]:
+    """
+    Reduce the directory levels of code_dirs to `level` number of levels.
+    Sums all the values of the same key.
+    Also, remove setup.py files from the count
+    """
+    reduced_dirs = defaultdict(lambda: {"py": 0, "ipynb": 0, "total": 0})
+    for k, v in code_dirs.items():
+        reduced_dirs["/".join(k.split("/")[:level])]["py"] += v["py"]
+        reduced_dirs["/".join(k.split("/")[:level])]["ipynb"] += v["ipynb"]
+        reduced_dirs["/".join(k.split("/")[:level])]["total"] += v["total"]
+
+    for k in deps_file:
+        if k["parser_choice"] == "setup.py":
+            setup_path = k["path"].split("/")[:-1]
+            index = "/".join(["."] if not setup_path else setup_path[:level])
+            reduced_dirs[index]["py"] -= 1
+            reduced_dirs[index]["total"] -= 1
+
+    return reduced_dirs
