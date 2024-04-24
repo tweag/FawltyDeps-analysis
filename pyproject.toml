@@ -10,6 +10,8 @@ python = "^3.10"
 jupyter = "^1.0.0"
 pandas = "^2.1.4"
 seaborn = "^0.13.1"
+matplotlib-venn = "^0.11.10"
+venny4py = "^1.0.1"
 
 
 [build-system]
