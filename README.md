@@ -43,6 +43,8 @@ Data format (example):
 
 ## Data
 
-Collect data from [Zhihan's experiment](https://github.com/tweag/FawltyDeps/tree/zhihan/PyPI-analyis-download-and-analyze/PyPI_analysis/experiments/biomedical_projects_experiment/results).
+Create `data` directory and copy data from S3 buckets:
+- s3://fawltydeps-tweag/pypi_analysis/results_biomed_20240423
+- s3://fawltydeps-tweag/pypi_analysis/results_pypi_20240423
 
-Dorran's data may be found on [Tweag Google Drive](https://drive.google.com/drive/folders/1Umd6GHW64iq-AG-CDjxoHG2TpOfS4xkF?usp=drive_link).
+We use two datasets: biomedical and top PyPI 2023 repositories. Detailed description TBD.
