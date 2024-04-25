@@ -45,14 +45,16 @@ def get_python_projects(data: Dict[str, Dict[str, Any]]) -> Set[str]:
     for k, d in data.items():
         project_name = d["metadata"]["project_name"]
         # There should be .py or .ipynb files in the code_dirs
-        # but if there are only .ipynb files and no imports, then
+        # If there are only .ipynb files and no imports, then
         # it is most likely an R project
-        if d["code_dirs"]:
+        # There are some projects written in Python 2.X,
+        # example: https://github.com/mattloose/RUFigs
+        # For those, FawltyDeps does not work and the results are not reliable.
+        # We assume that all Python projects have 3-rd party imports.
+        if d["code_dirs"] and d["imports"]:
             code_dirs = exctract_code_directories(d["code_dirs"], project_name)
-            total_ipynb_count = sum([v for k, v in code_dirs.items() if k[1] == "ipynb"])
-            total_py_count = sum([v for k, v in code_dirs.items() if k[1] == "py"])
-            if not (total_ipynb_count > 0 and total_py_count == 0):
-                codedirs[project_name] = code_dirs
+            codedirs[project_name] = code_dirs
+
 
     df_codedirs = pd.DataFrame.from_dict(codedirs, orient="index")
 
