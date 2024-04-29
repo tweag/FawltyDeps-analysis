@@ -1,9 +1,10 @@
 # Preparation of the data for the analysis
 
-from collections import defaultdict
 import json
+from collections import defaultdict
 from pathlib import Path
-from typing import List, Dict, Any, Set
+from typing import Any, Dict, List, Set
+
 import pandas as pd
 
 
@@ -22,20 +23,23 @@ def filter_corrupt_files(paths: List[Path]) -> (List[Dict[str, Any]], List[str])
             corrupt_files.append(path.name)
     return data, corrupt_files
 
-def exctract_code_directories(codedir: Dict[str, Dict[str, Any]], project_name: str) -> Dict[str, Dict[str, Any]]:
+
+def exctract_code_directories(
+    codedir: Dict[str, Dict[str, Any]], project_name: str
+) -> Dict[str, Dict[str, Any]]:
     """Exctract code directories and sum up the number of files in each directory."""
     code_dirs = defaultdict(int)
     for folder, source_type_dict in codedir.items():
         if folder.lower() == project_name.lower():
             code_dirs |= {
-                ("PROJECT_NAME", "py"): source_type_dict["py"], 
-                ("PROJECT_NAME","ipynb"): source_type_dict["ipynb"]
-                }
+                ("PROJECT_NAME", "py"): source_type_dict["py"],
+                ("PROJECT_NAME", "ipynb"): source_type_dict["ipynb"],
+            }
         else:
             code_dirs |= {
-                (folder, "py"): source_type_dict["py"], 
-                (folder,"ipynb"): source_type_dict["ipynb"]
-                }
+                (folder, "py"): source_type_dict["py"],
+                (folder, "ipynb"): source_type_dict["ipynb"],
+            }
     return code_dirs
 
 
@@ -55,11 +59,11 @@ def get_python_projects(data: Dict[str, Dict[str, Any]]) -> Set[str]:
             code_dirs = exctract_code_directories(d["code_dirs"], project_name)
             codedirs[project_name] = code_dirs
 
-
     df_codedirs = pd.DataFrame.from_dict(codedirs, orient="index")
 
     python_projects = set(df_codedirs.index)
     return python_projects
+
 
 def get_depsfiles(data) -> Dict[str, List[Dict[str, Any]]]:
     """
@@ -76,6 +80,7 @@ def get_depsfiles(data) -> Dict[str, List[Dict[str, Any]]]:
     print(len(depsfiles))
     return depsfiles
 
+
 def get_parser_choices(depsfiles):
     """Find all parser choices where deps_count > 0"""
     parser_choices = defaultdict(dict)
@@ -88,7 +93,9 @@ def get_parser_choices(depsfiles):
     return parser_choices
 
 
-def reduce_directory_levels(code_dirs: Dict[str, Any], deps_file: Dict[str, Any], level: int = 2) -> Dict[str, Any]:
+def reduce_directory_levels(
+    code_dirs: Dict[str, Any], deps_file: Dict[str, Any], level: int = 2
+) -> Dict[str, Any]:
     """
     Reduce the directory levels of code_dirs to `level` number of levels.
     Sums all the values of the same key.
