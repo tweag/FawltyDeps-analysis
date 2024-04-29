@@ -22,10 +22,20 @@ def filter_corrupt_files(paths: List[Path]) -> (List[Dict[str, Any]], List[str])
             corrupt_files.append(path.name)
     return data, corrupt_files
 
-def exctract_code_directories(codedir: Dict[str, Dict[str, Any]], project_name: str) -> Dict[str, Dict[str, Any]]:
+
+def exctract_code_directories(
+        codedir: Dict[str, Dict[str, Any]],
+        deps_file:Dict[str, Dict[str, Any]],
+        project_name: str,
+        reduce_level: int = 1
+        ) -> Dict[str, Dict[str, Any]]:
     """Exctract code directories and sum up the number of files in each directory."""
+    if not codedir:
+        return {}
+    
     code_dirs = defaultdict(int)
-    for folder, source_type_dict in codedir.items():
+    reduced_directories = reduce_directory_levels(codedir, deps_file, level = reduce_level)       
+    for folder, source_type_dict in reduced_directories.items():
         if folder.lower() == project_name.lower():
             code_dirs |= {
                 ("PROJECT_NAME", "py"): source_type_dict["py"], 
@@ -38,10 +48,20 @@ def exctract_code_directories(codedir: Dict[str, Dict[str, Any]], project_name: 
                 }
     return code_dirs
 
+def get_code_dirs(data: Dict[str, Dict[str, Any]], reduce_level: int = 2) -> pd.DataFrame:
+    """Get all code directories for each project. Create a DataFrame with project names as index."""
+    codedirs = defaultdict(dict)
+    for k, d in data.items():
+        project_name = d["metadata"]["project_name"]
+        code_dirs = exctract_code_directories(d["code_dirs"], d["deps_file"], project_name, reduce_level = reduce_level)
+        codedirs[project_name] = code_dirs
+
+    return pd.DataFrame.from_dict(codedirs, orient="index")
+
 
 def get_python_projects(data: Dict[str, Dict[str, Any]]) -> Set[str]:
     """Get all projects that have Python code. Create a set of Python project names."""
-    codedirs = defaultdict(dict)
+    python_projects = set()
     for k, d in data.items():
         project_name = d["metadata"]["project_name"]
         # There should be .py or .ipynb files in the code_dirs
@@ -52,13 +72,8 @@ def get_python_projects(data: Dict[str, Dict[str, Any]]) -> Set[str]:
         # For those, FawltyDeps does not work and the results are not reliable.
         # We assume that all Python projects have 3-rd party imports.
         if d["code_dirs"] and d["imports"]:
-            code_dirs = exctract_code_directories(d["code_dirs"], project_name)
-            codedirs[project_name] = code_dirs
+            python_projects.add(project_name)
 
-
-    df_codedirs = pd.DataFrame.from_dict(codedirs, orient="index")
-
-    python_projects = set(df_codedirs.index)
     return python_projects
 
 def get_depsfiles(data) -> Dict[str, List[Dict[str, Any]]]:
