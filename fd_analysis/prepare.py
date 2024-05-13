@@ -30,7 +30,10 @@ def exctract_code_directories(
     """Exctract code directories and sum up the number of files in each directory."""
     code_dirs = defaultdict(int)
     for folder, source_type_dict in codedir.items():
-        if folder.replace("-", "_").lower() == project_name.replace("-", "_").lower():
+        if (
+            folder.replace("-", "_").lower().split("/")[0]
+            == project_name.replace("-", "_").lower()
+        ):
             code_dirs |= {
                 ("PROJECT_NAME", "py"): source_type_dict["py"],
                 ("PROJECT_NAME", "ipynb"): source_type_dict["ipynb"],
