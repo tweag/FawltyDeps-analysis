@@ -24,10 +24,10 @@ def filter_corrupt_files(paths: List[Path]) -> (List[Dict[str, Any]], List[str])
     return data, corrupt_files
 
 
-def exctract_code_directories(
+def extract_code_directories(
     codedir: Dict[str, Dict[str, Any]], project_name: str
 ) -> Dict[str, Dict[str, Any]]:
-    """Exctract code directories and sum up the number of files in each directory."""
+    """Extract code directories and sum up the number of files in each directory."""
     code_dirs = defaultdict(int)
     for folder, source_type_dict in codedir.items():
         if (
@@ -59,7 +59,7 @@ def get_python_projects(data: Dict[str, Dict[str, Any]]) -> Set[str]:
         # For those, FawltyDeps does not work and the results are not reliable.
         # We assume that all Python projects have 3-rd party imports.
         if d["code_dirs"] and d["imports"]:
-            code_dirs = exctract_code_directories(d["code_dirs"], project_name)
+            code_dirs = extract_code_directories(d["code_dirs"], project_name)
             codedirs[project_name] = code_dirs
 
     df_codedirs = pd.DataFrame.from_dict(codedirs, orient="index")
