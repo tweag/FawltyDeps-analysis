@@ -31,7 +31,7 @@ def extract_code_directories(
     code_dirs = defaultdict(int)
     for folder, source_type_dict in codedir.items():
         if (
-            folder.replace("-", "_").lower().split("/")[0]
+            folder.replace("-", "_").lower()
             == project_name.replace("-", "_").lower()
         ):
             code_dirs |= {
