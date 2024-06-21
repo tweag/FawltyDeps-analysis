@@ -46,8 +46,8 @@ def extract_code_directories(
     return code_dirs
 
 
-def get_python_projects(data: Dict[str, Dict[str, Any]]) -> Set[str]:
-    """Get all projects that have Python code. Create a set of Python project names."""
+def get_python_projects_df(data: Dict[str, Dict[str, Any]]) -> pd.DataFrame:
+    """Get all projects that have Python code. Create a DataFrame with project names as index."""
     codedirs = defaultdict(dict)
     for k, d in data.items():
         project_name = d["metadata"]["project_name"]
@@ -64,7 +64,12 @@ def get_python_projects(data: Dict[str, Dict[str, Any]]) -> Set[str]:
 
     df_codedirs = pd.DataFrame.from_dict(codedirs, orient="index")
 
-    python_projects = set(df_codedirs.index)
+    return df_codedirs
+
+
+def get_python_projects(dataframe: pd.DataFrame) -> Set[str]:
+    """Get all projects that have Python code. Create a set of Python project names."""
+    python_projects = set(dataframe.index)
     return python_projects
 
 
