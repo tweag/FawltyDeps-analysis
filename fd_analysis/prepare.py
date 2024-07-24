@@ -73,12 +73,12 @@ def get_python_projects(dataframe: pd.DataFrame) -> Set[str]:
     return python_projects
 
 
-def get_depsfiles(data) -> Dict[str, List[Dict[str, Any]]]:
+def get_depsfiles(data:  Dict[str, Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
     """
     Get all dependencies files for Python projects.
     Create a dictionary with project names as keys and dependencies files as values.
     """
-    python_data = get_python_projects(data)
+    python_data = get_python_projects(get_python_projects_df(data))
     depsfiles = defaultdict(list)
     for d in data.values():
         if d["metadata"]["project_name"] in python_data:
